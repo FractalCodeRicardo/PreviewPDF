@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="/css/bootstrap.css" />
+    <title>Document</title>
+</head>
+
+<body>
+
+    <div class="container-sm">
+        <h4>Documentos</h4>
+
+        <br />
+        <br />
+
+        <input id="archivo" type="file" name="file"></input>
+        <button onclick="guardarArchivo()" id="guardar-archivo" class="btn btn-primary">Guardar archivo</button>
+
+        <br />
+        <br />
+        <br />
+        <br />
+
+        <table id="tabla-archivos" class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Archivo</td>
+                    <th scope="col"> ver </td>
+                </tr>
+            </thead>
+
+        </table>
+
+        <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">New message</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="pdf-viewer"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+
+    <script src="js/jquery-3.4.1.js"></script>
+    <script src="js/jquery-ui.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfobject/2.1.1/pdfobject.min.js"></script>
+
+    <script>
+
+        function guardarArchivo() {
+            let eArchivo = document.getElementById("archivo");
+
+            if (!eArchivo.files.length) {
+                alert("Seleccione un archivo");
+                return;
+            }
+
+            let archivo = eArchivo.files[0];  // file from input
+            let req = new XMLHttpRequest();
+            let formData = new FormData();
+
+            req.onreadystatechange = function () {
+                if (req.readyState == XMLHttpRequest.DONE) {
+                    let respuesta = JSON.parse(this.response);
+                    if (respuesta.exito) {
+                        location.reload();
+                    }
+                }
+            }
+
+            formData.append("archivo", archivo);
+            req.open("POST", '/archivo');
+            req.send(formData);
+        }
+
+
+        function cargarArchivos() {
+            let tabla = $("#tabla-archivos");
+            $.get("/archivo", function (res) {
+                if (res.exito) {
+
+                    for (let i in res.archivos) {
+                        let archivo = res.archivos[i];
+
+                        let button = $('<button class="btn btn-primary">ver</button>');
+                        let fila = $('<tr><td>' + archivo + '</td><td>');
+
+                        button.on("click", function (e) {
+                            verArchivo(archivo);
+                        })
+
+
+                        fila.append(button);
+                        tabla.append(fila);
+                    }
+
+                }
+            })
+        }
+
+
+        function verArchivo(archivo) {
+            var options = {
+                height: "400px",
+                pdfOpenParams: { view: 'FitV', page: '2' }
+            };
+
+            PDFObject.embed("/archivos/" + archivo, "#pdf-viewer", options);
+
+            $('#modal').draggable({
+                "handle": ".modal-header"
+            });
+
+            $("#modal").modal();
+        }
+
+
+        cargarArchivos();
+
+
+    </script>
+</body>
+
+</html>
